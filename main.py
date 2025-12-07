@@ -41,7 +41,7 @@
 #
 # # zu verbessser
 # # es gibt kein Sinn das Bild zu drehen, damit die Zahlen konnen nicht korrekt gelesen werden
-
+import glob
 # {
 #   "category": "ripe",
 #   "edible": true,
@@ -60,23 +60,97 @@
 #
 
 import os
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
 
-dir_path = os.getcwd()
-test_folder_path = fr"{dir_path}\\data\\test"
-train_folder_path = fr"{dir_path}\\data\\train"
-valid_folder_path = fr"{dir_path}\\data\\valid"
-
-
-output_data_structure = {
-    "fresh_unripe":{"eatable": 0, "days_maturity":5, "days_left":9},
-    "unripe":      {"eatable": 1, "days_maturity":3, "days_left":7},
-    "fresh_ripe":  {"eatable": 1, "days_maturity":1, "days_left":5},
-    "ripe":        {"eatable": 1, "days_maturity":0, "days_left":2.5},
-    "overripe":    {"eatable": 1, "days_maturity":0, "days_left":1},
-    "rotten":      {"eatable": 0, "days_maturity":0, "days_left":0},
- }
+from settings import train_folder_path, dir_path
+from utils.cnn import get_callbacks, build_multihead_cnn
+from utils.main_utils import create_train_data
+from utils.save_data_plot import save_data_spread_plot
 
 # download dataset
 # get dataset prepared with output_data_structure
 # CNN backbone with 3 outputs
 
+
+# create train data labels and images
+train_data_images, train_data_labels = create_train_data(train_folder_path)
+
+# save data spread image from plt into /docs/
+save_data_spread_plot(train_data_labels)
+
+# 1️⃣ Перемістимо осі, щоб перший індекс був кількістю зразків
+X = np.moveaxis(train_data_images, [0, 1, 2, 3, 4], [3, 1, 2, 0, 4])
+Y = train_data_labels
+
+# will keep test data as a path to picture to save memory space
+X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+X_train = X_train.astype('float32') / 255.0
+X_test = X_test.astype('float32') / 255.0
+
+model = build_multihead_cnn()
+model.summary()
+
+
+history = model.fit(
+    X_train,
+    {
+        "bin_out": y_train[:, 0],  # 0 або 1
+        "reg1_out": y_train[:, 1],  # число
+        "reg2_out": y_train[:, 2]  # число
+    },
+    epochs=1,
+    batch_size=32,
+    callbacks=[get_callbacks()]
+)
+
+print(history)
+
+fig, axes = plt.subplots(ncols=3, figsize=(25, 6))
+
+# ---------------------------------------------------------
+# 1) Accuracy (лише для бінарної голови)
+# ---------------------------------------------------------
+#axes[0].plot(history.history['accuracy'], label='Train bin_acc')
+axes[0].set_title("Binary Head Accuracy")
+axes[0].set_xlabel("Epoch")
+axes[0].set_ylabel("Accuracy")
+axes[0].legend()
+
+# ---------------------------------------------------------
+# 2) MAE для регресійних виходів
+# ---------------------------------------------------------
+axes[1].plot(history.history['reg1_out_mae'], label='Train reg1_mae')
+axes[1].plot(history.history['val_reg1_out_mae'], label='Val reg1_mae')
+
+axes[1].plot(history.history['reg2_out_mae'], label='Train reg2_mae')
+axes[1].plot(history.history['val_reg2_out_mae'], label='Val reg2_mae')
+
+axes[1].set_title("Regression Heads MAE")
+axes[1].set_xlabel("Epoch")
+axes[1].set_ylabel("MAE")
+axes[1].legend()
+
+# ---------------------------------------------------------
+# 3) Загальний loss
+# ---------------------------------------------------------
+axes[2].plot(history.history['loss'], label='Train loss')
+axes[2].plot(history.history['val_loss'], label='Val loss')
+
+axes[2].set_title("Total Loss")
+axes[2].set_xlabel("Epoch")
+axes[2].set_ylabel("Loss")
+axes[2].legend()
+
+plt.tight_layout()
+plt.savefig(fr"{dir_path}\docs\data_train.png", dpi=300, bbox_inches="tight")
+plt.show()
+
+
+print(X_train[0])
+print(y_train[0])
+
+exit()
