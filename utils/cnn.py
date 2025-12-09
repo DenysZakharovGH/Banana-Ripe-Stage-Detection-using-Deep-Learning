@@ -58,6 +58,6 @@ def build_multihead_cnn(input_shape=(128, 128, 3)):  # розмір зображ
 def get_callbacks():
     callbacks = [
         EarlyStopping(monitor='reg1_out_loss', patience=5, restore_best_weights=True),
-        ModelCheckpoint(fr"{dir_path}\\models\\best_model.keras", monitor='accuracy', save_best_only=True)
+        ModelCheckpoint(fr"{dir_path}\\models\\best.h5", monitor='loss', save_best_only=True)
     ]
     return callbacks

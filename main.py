@@ -107,14 +107,14 @@ history = model.fit(
     callbacks=[get_callbacks()]
 )
 
-print(history)
+print(history.history.keys())
 
 fig, axes = plt.subplots(ncols=3, figsize=(25, 6))
 
 # ---------------------------------------------------------
 # 1) Accuracy (лише для бінарної голови)
 # ---------------------------------------------------------
-#axes[0].plot(history.history['accuracy'], label='Train bin_acc')
+axes[0].plot(history.history['bin_out_accuracy'], label='Train bin_acc')
 axes[0].set_title("Binary Head Accuracy")
 axes[0].set_xlabel("Epoch")
 axes[0].set_ylabel("Accuracy")
@@ -124,10 +124,10 @@ axes[0].legend()
 # 2) MAE для регресійних виходів
 # ---------------------------------------------------------
 axes[1].plot(history.history['reg1_out_mae'], label='Train reg1_mae')
-axes[1].plot(history.history['val_reg1_out_mae'], label='Val reg1_mae')
+#axes[1].plot(history.history['val_reg1_out_mae'], label='Val reg1_mae')
 
 axes[1].plot(history.history['reg2_out_mae'], label='Train reg2_mae')
-axes[1].plot(history.history['val_reg2_out_mae'], label='Val reg2_mae')
+#axes[1].plot(history.history['val_reg2_out_mae'], label='Val reg2_mae')
 
 axes[1].set_title("Regression Heads MAE")
 axes[1].set_xlabel("Epoch")
@@ -138,7 +138,7 @@ axes[1].legend()
 # 3) Загальний loss
 # ---------------------------------------------------------
 axes[2].plot(history.history['loss'], label='Train loss')
-axes[2].plot(history.history['val_loss'], label='Val loss')
+#axes[2].plot(history.history['val_loss'], label='Val loss')
 
 axes[2].set_title("Total Loss")
 axes[2].set_xlabel("Epoch")
