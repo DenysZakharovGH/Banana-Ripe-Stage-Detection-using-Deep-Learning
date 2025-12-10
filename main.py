@@ -65,7 +65,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 
-from settings import train_folder_path, dir_path
+from settings import train_folder_path, dir_path, checkpoint_filepath, EPOCHS, BATCH_SIZE
 from utils.cnn import get_callbacks, build_multihead_cnn
 from utils.main_utils import create_train_data
 from utils.save_data_plot import save_data_spread_plot
@@ -82,14 +82,19 @@ train_data_images, train_data_labels = create_train_data(train_folder_path)
 save_data_spread_plot(train_data_labels)
 
 # 1️⃣ Перемістимо осі, щоб перший індекс був кількістю зразків
-X = np.moveaxis(train_data_images, [0, 1, 2, 3, 4], [3, 1, 2, 0, 4])
+#X = np.moveaxis(train_data_images, [0, 1, 2, 3, 4], [3, 1, 2, 0, 4])
+#Y = train_data_labels
+X = train_data_images.astype("float32") / 255.0
 Y = train_data_labels
 
-# will keep test data as a path to picture to save memory space
-X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+print(X.shape)
+print(Y.shape)
 
-X_train = X_train.astype('float32') / 255.0
-X_test = X_test.astype('float32') / 255.0
+# will keep test data as a path to picture to save memory space
+X_train, X_val, y_train, y_val = train_test_split(X, Y, test_size=0.2, random_state=42)
+
+# X_train = X_train.astype('float32') / 255.0
+# X_val = X_val.astype('float32') / 255.0
 
 model = build_multihead_cnn()
 model.summary()
@@ -102,55 +107,54 @@ history = model.fit(
         "reg1_out": y_train[:, 1],  # число
         "reg2_out": y_train[:, 2]  # число
     },
-    epochs=1,
-    batch_size=32,
+    validation_data=(
+        X_val,
+        {
+            "bin_out": y_val[:, 0],  # 0 або 1
+            "reg1_out": y_val[:, 1],  # число
+            "reg2_out": y_val[:, 2]  # число
+        },
+    ),
+
+    epochs=EPOCHS,
+    batch_size=BATCH_SIZE,
     callbacks=[get_callbacks()]
 )
+model.save(checkpoint_filepath)
+# The model weights (that are considered the best) can be loaded as -
+#model.load_weights(checkpoint_filepath)
 
 print(history.history.keys())
 
 fig, axes = plt.subplots(ncols=3, figsize=(25, 6))
 
 # ---------------------------------------------------------
-# 1) Accuracy (лише для бінарної голови)
-# ---------------------------------------------------------
-axes[0].plot(history.history['bin_out_accuracy'], label='Train bin_acc')
-axes[0].set_title("Binary Head Accuracy")
-axes[0].set_xlabel("Epoch")
-axes[0].set_ylabel("Accuracy")
-axes[0].legend()
-
-# ---------------------------------------------------------
 # 2) MAE для регресійних виходів
 # ---------------------------------------------------------
-axes[1].plot(history.history['reg1_out_mae'], label='Train reg1_mae')
-#axes[1].plot(history.history['val_reg1_out_mae'], label='Val reg1_mae')
+axes[0].plot(history.history['reg1_out_mae'], label='Train reg1_mae')
+axes[0].plot(history.history['val_reg1_out_mae'], label='Val reg1_mae')
 
-axes[1].plot(history.history['reg2_out_mae'], label='Train reg2_mae')
-#axes[1].plot(history.history['val_reg2_out_mae'], label='Val reg2_mae')
+axes[0].plot(history.history['reg2_out_mae'], label='Train reg2_mae')
+axes[0].plot(history.history['val_reg2_out_mae'], label='Val reg2_mae')
 
-axes[1].set_title("Regression Heads MAE")
-axes[1].set_xlabel("Epoch")
-axes[1].set_ylabel("MAE")
-axes[1].legend()
+axes[0].set_title("Regression Heads MAE")
+axes[0].set_xlabel("Epoch")
+axes[0].set_ylabel("MAE")
+axes[0].legend()
 
 # ---------------------------------------------------------
 # 3) Загальний loss
 # ---------------------------------------------------------
-axes[2].plot(history.history['loss'], label='Train loss')
-#axes[2].plot(history.history['val_loss'], label='Val loss')
+axes[1].plot(history.history['loss'], label='Train loss')
+axes[1].plot(history.history['val_loss'], label='Val loss')
 
-axes[2].set_title("Total Loss")
-axes[2].set_xlabel("Epoch")
-axes[2].set_ylabel("Loss")
-axes[2].legend()
+axes[1].set_title("Total Loss")
+axes[1].set_xlabel("Epoch")
+axes[1].set_ylabel("Loss")
+axes[1].legend()
 
 plt.tight_layout()
 plt.savefig(fr"{dir_path}\docs\data_train.png", dpi=300, bbox_inches="tight")
-plt.show()
 
-
-print(X_train[0])
-print(y_train[0])
 
 exit()
