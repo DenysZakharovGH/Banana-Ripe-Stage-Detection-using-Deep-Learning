@@ -8,5 +8,5 @@ IMAGE_DSIZE = (128, 128, 3)
 TRAIN_SIZE = 100000
 
 EPOCHS = 30
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 checkpoint_filepath = fr"{dir_path}\\models\\checkpoint_weights.keras"

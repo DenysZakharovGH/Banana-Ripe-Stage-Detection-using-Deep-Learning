@@ -1,16 +1,26 @@
+import random
+
 import cv2
 import numpy as np
-from sklearn.metrics import confusion_matrix
+from matplotlib import pyplot as plt
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 
 from tensorflow.keras.models import load_model
+from tensorflow.python.ops.metrics_impl import precision
 
-from settings import checkpoint_filepath, test_folder_path
-from utils.main_utils import create_train_data
+from settings import checkpoint_filepath, test_folder_path, dir_path
+from utils.main_utils import create_train_data, create_train_data_days_left
 from utils.save_data_plot import save_data_spread_plot
 
+
+counter = 0
+colomn = 5
+rows = 6
+days_tolerance = 1
+
 # create train data labels and images
-train_data_images, train_data_labels = create_train_data(test_folder_path)
+train_data_images, train_data_labels = create_train_data_days_left(test_folder_path)
 
 
 # 1️⃣ Перемістимо осі, щоб перший індекс був кількістю зразків
@@ -19,38 +29,30 @@ y_test = train_data_labels
 
 model = load_model(checkpoint_filepath)
 
-results = model.predict(X_test)
+y_pred = model.predict(X_test)
+y_pred_labels = np.multiply(y_pred,10).squeeze(-1)
 
-# Remove the last singleton dimension
-arr_squeezed = np.squeeze(results)  # shape becomes (3, 562)
+plt.figure(figsize=(15, 10))
+for i in random.sample(range(0, len(y_pred_labels)), rows*colomn):
+    plt.subplot(colomn, rows, counter + 1)
 
-# Transpose to swap axes
-results_final = arr_squeezed.T      # shape becomes (562, 3)
+    image = X_test[i]
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-print(np.asarray(results_final).shape)
-print(np.asarray(y_test).shape)
+    plt.imshow(image, cmap="gray")
+    plt.axis("off")
 
+    true_label = y_test[i].astype(int)
+    pred_label = round(float(y_pred_labels[i]), 2)
 
-for iter in range(100, 400, 1):
+    color = "green" if abs(true_label - pred_label) < days_tolerance else "red"
+    plt.title(f"Pred days left: {pred_label}\nTrue days left:: {true_label}", color=color)
 
-    print("Predicted values",results_final[iter])
-    print("Real      values",y_test[iter])
-    image_np = X_test[iter]
-    cv2.imshow("test", cv2.resize(image_np, (512,512)) )
-    cv2.waitKey(0)
+    counter +=1
+    if counter >= rows*colomn: break
 
+plt.tight_layout()
 
-
-outputs = ["bin_out", "reg1_out", "reg2_out"]
-y_test_dict = {
-    "bin_out": y_test[:, 0],
-    "reg1_out": y_test[:, 1],
-    "reg2_out": y_test[:, 2]
-}
-
-results = model.evaluate(X_test, y_test_dict, verbose=1)
-for name, value in zip(model.metrics_names, results):
-    print(f"{name}: {value:.4f}")
-
-
+plt.savefig(fr"{dir_path}\docs\result_matrix.png", dpi=300, bbox_inches="tight")
+plt.show()
 
