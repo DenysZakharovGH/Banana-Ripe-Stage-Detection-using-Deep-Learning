@@ -3,13 +3,6 @@
 # # 2. Saving education progress
 # # 3. Saving weighs and baises
 # # 4. Want to see how looks beetween layers results
-#
-# # 0. Setup enviroment
-# # 0.1. Set up libraries
-# # 0.2. Set up folders with images
-# # 0.3. Set up global names
-#
-#
 # # 1. About data
 # #    1.1 Importing data
 # #    1.2 Data destribution with grafic or pie chart # tran vs test
@@ -29,25 +22,6 @@
 # #   512 input Neurons
 # #   4 hidden layer
 # #   1 output with 0/1 - has tumor or not - softmax activation
-#
-# # Train CNN
-# # show training results, model performance
-#
-# # Avaluate model
-# # confusion matrix
-#
-# # model results accuracy
-#
-#
-# # zu verbessser
-# # es gibt kein Sinn das Bild zu drehen, damit die Zahlen konnen nicht korrekt gelesen werden
-import glob
-# {
-#   "category": "ripe",
-#   "edible": true,
-#   "days_left": 3,
-#   "note": "Найкраще їсти зараз. Через 2–4 дні стане переспілим."
-# }
 
 # Категорія	                                                        Чи можна їсти?	                                                                            Орієнтовно скільки ще може лежати (кімнатна температура)
 # freshunripe (свіжий зелений, дуже твердий)	                    ❌ Нежелано (не смачний, дуже крохмалистий, але не шкідливий)	 False             5 днів до стиглості,         9 днів до початку псування
@@ -67,7 +41,7 @@ from sklearn.model_selection import train_test_split
 
 from settings import train_folder_path, dir_path, checkpoint_filepath, EPOCHS, BATCH_SIZE
 from utils.cnn import get_callbacks, build_multihead_cnn
-from utils.main_utils import create_train_data, create_train_data_eatable
+from utils.main_utils import create_train_data, create_train_data_days_left
 from utils.save_data_plot import save_data_spread_plot
 
 # download dataset
@@ -76,13 +50,13 @@ from utils.save_data_plot import save_data_spread_plot
 
 
 # create train data labels and images
-train_data_images, train_data_labels = create_train_data_eatable(train_folder_path)
+train_data_images, train_data_labels = create_train_data_days_left(train_folder_path)
 
 # save data spread image from plt into /docs/
 save_data_spread_plot(train_data_labels)
 
 X = train_data_images.astype("float32") / 255.0
-Y = train_data_labels
+Y = train_data_labels.astype("float32") / 10
 
 
 # will keep test data as a path to picture to save memory space
@@ -106,20 +80,15 @@ history = model.fit(
 )
 model.save(checkpoint_filepath)
 # The model weights (that are considered the best) can be loaded as -
-#model.load_weights(checkpoint_filepath)
-
-print(history.history.keys())
 
 fig, axes = plt.subplots(ncols=2, figsize=(20, 5))
 
-axes[0].plot(history.history['accuracy'], label='Train accuracy')
-axes[0].plot(history.history['val_accuracy'], label='Validation accuracy')
+axes[0].plot(history.history['mae'], label='Train mae')
+axes[0].plot(history.history['val_mae'], label='Validation mae')
 
 axes[0].legend()
-#axes[0].title("Accuracy training")
 axes[0].set_xlabel("Epoch")
 axes[0].set_ylabel("Accuracy")
-
 
 axes[1].plot(history.history['val_loss'], label='Validation loss')
 axes[1].plot(history.history['loss'], label='loss')
@@ -129,5 +98,3 @@ axes[1].set_xlabel("Epoch")
 axes[1].set_ylabel("loss")
 
 plt.savefig(fr"{dir_path}\docs\data_train.png", dpi=300, bbox_inches="tight")
-
-exit()

@@ -1,25 +1,94 @@
-## Banana-Ripe-Stage-Detection-using-Deep-Learning
+# 🍌 Banana Ripeness & Shelf-Life Predictor
 
-This repository contains a deep-learning–based system for automatically detecting the ripeness stage of bananas from
-images. The project uses convolutional neural networks (CNNs) to classify bananas into multiple maturity stages (e.g.,
-Unripe, Mid-Ripe, Ripe, Overripe), enabling applications in agriculture, retail automation.
+A Deep Learning project that analyzes banana images and predicts **how
+many days remain before the banana becomes overripe or should be
+discarded**.
 
+This project uses a **multi-head Convolutional Neural Network (CNN)**
+trained on categorized banana images to determine ripeness stage and
+estimate the remaining number of edible days.
 
-Accuracy: 0.891459074733096
-Classification report:
-               precision    recall  f1-score   support
-
-           0       0.84      0.95      0.89       268
-           1       0.95      0.84      0.89       294
-
-    accuracy                           0.89       562
-   macro avg       0.90      0.89      0.89       562
-weighted avg       0.90      0.89      0.89       562
+## 🌟 Features
 
 
+-   💾 **Saves training progress, weights, and biases**
+-   👁️ **Visualizes intermediate training results**
+-   🧠 **Multi-output CNN model**
+-   📊 **Automatic dataset distribution plots**
+---
+
+## 📂 Dataset Categories & Interpretation
+
+  ----------------------------------------------------------------------------------
+  Category          Edible?       Days Until Spoilage              Notes
+  ----------------- ------------- -------------------------------- -----------------
+  **freshunripe**   ❌ Not        \~5 days to ripeness / 9 to      Very green, hard
+                    recommended   spoilage                         
+
+  **unripe**        ❌ Safe but   \~3 days to ripeness / 7 to      Greenish-yellow
+                    not tasty     spoilage                         
+
+  **freshripe**     ✅ Best taste 1--5 days                        Fully yellow
+
+  **ripe**          ✅ Good       0--2 days                        Small brown dots
+
+  **overripe**      ⚠️ Edible     0--1 days                        Very soft,
+                    with caution                                   spotted
+
+  **rotten**        ❌ Not edible 0 days                           Mold, smell,
+                                                                   black areas
+  ----------------------------------------------------------------------------------
+
+---
+## 🧠 Model Architecture
+
+    Conv2D: 32 (4x4)
+    Conv2D: 64 (4x4)
+    Conv2D: 128 (4x4)
+    Conv2D: 128 (4x4)
+    Dense: 512 neurons
+    Dense: 4 hidden layers
+    Output: multi-head
 
 ---
 
+Update *settings.py* with paths and hyperparameters.
+
+## 📁 Folder Structure
+
+    project/
+    │-- utils/
+    │-- docs/
+    │   ├── data_train.png
+    │   └── results_example.png
+    │-- settings.py
+    │-- train.py
+    │-- README.md
+
+---
+## 📊 Training Results
+
+### Training Curve
+
+![Training Plot](docs/data_train.png)
+---
+### Example Prediction Results
+
+![Results Example](docs/result_matrix.png)
+---
+## 📈 Future Improvements
+
+-   Add confusion matrix
+-   Improve augmentation
+-   API real-time prediction
+-   Convert to ONNX/TFLite
+-   Mobile-friendly model
+
+---
+## 📜 License
+MIT License
+
+---
 ## 🧑‍💻 Author
 
 **Denys**  

@@ -21,10 +21,15 @@ def build_multihead_cnn(input_shape=IMAGE_DSIZE):  # розмір зображе
 
         layers.Dense(64, activation='relu'),
         layers.Dropout(0.3),
-        layers.Dense(1, activation='sigmoid')
+        layers.Dense(1, activation='linear')
     ])
 
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+    model.compile(
+        optimizer='adam',
+        loss='mse',
+        metrics=['mae']
+    )
 
     return model
 

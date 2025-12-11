@@ -1,3 +1,5 @@
+import random
+
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
@@ -5,13 +7,20 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, accuracy_s
 from sklearn.model_selection import train_test_split
 
 from tensorflow.keras.models import load_model
+from tensorflow.python.ops.metrics_impl import precision
 
 from settings import checkpoint_filepath, test_folder_path, dir_path
-from utils.main_utils import create_train_data, create_train_data_eatable
+from utils.main_utils import create_train_data, create_train_data_days_left
 from utils.save_data_plot import save_data_spread_plot
 
+
+counter = 0
+colomn = 5
+rows = 6
+days_tolerance = 1
+
 # create train data labels and images
-train_data_images, train_data_labels = create_train_data_eatable(test_folder_path)
+train_data_images, train_data_labels = create_train_data_days_left(test_folder_path)
 
 
 # 1️⃣ Перемістимо осі, щоб перший індекс був кількістю зразків
@@ -21,34 +30,7 @@ y_test = train_data_labels
 model = load_model(checkpoint_filepath)
 
 y_pred = model.predict(X_test)
-y_pred_labels = (y_pred > 0.5).astype(int)
-
-# confusion matrix plot
-cm = confusion_matrix(y_test, y_pred_labels, labels=[0,1])
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["Eatable", "NOT Eatable"])
-disp.plot(cmap="Blues")
-plt.title("Confusion Matrix")
-plt.savefig(fr"{dir_path}\docs\confusion_matrix.png", dpi=300, bbox_inches="tight")
-
-print("Accuracy:", accuracy_score(y_test, y_pred_labels))
-print("Classification report:\n", classification_report(y_test, y_pred_labels))
-
-incorrect = np.where(y_pred_labels.flatten() != y_test.flatten())[0]
-
-# for i in incorrect:
-#     test_image = X_test[i]
-#     plt.imshow(test_image)
-#     plt.title(f"True: {y_test[i]}, Predicted: {y_pred_labels[i][0]}")
-#     plt.show()
-
-
-
-counter = 0
-colomn = 5
-rows = 6
-
-import random
-
+y_pred_labels = np.multiply(y_pred,10).squeeze(-1)
 
 plt.figure(figsize=(15, 10))
 for i in random.sample(range(0, len(y_pred_labels)), rows*colomn):
@@ -61,14 +43,13 @@ for i in random.sample(range(0, len(y_pred_labels)), rows*colomn):
     plt.axis("off")
 
     true_label = y_test[i].astype(int)
-    pred_label = y_pred_labels[i]
+    pred_label = round(float(y_pred_labels[i]), 2)
 
-    color = "green" if true_label == pred_label else "red"
-    plt.title(f"Pred: {pred_label[0]}\nTrue: {true_label}", color=color)
+    color = "green" if abs(true_label - pred_label) < days_tolerance else "red"
+    plt.title(f"Pred days left: {pred_label}\nTrue days left:: {true_label}", color=color)
 
     counter +=1
     if counter >= rows*colomn: break
-
 
 plt.tight_layout()
 
