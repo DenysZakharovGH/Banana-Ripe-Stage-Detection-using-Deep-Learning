@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from settings import IMAGE_DSIZE, dir_path, checkpoint_filepath
 
 test_image_path = fr"{dir_path}\\data\\live_test\\a921de66-4324-4229-82ba-a68aa941fe8d.jpg"
+test_image_path = fr"{dir_path}\\data\\live_test\\8997ff06-79bb-4ee9-9f8a-f08f84cd6ff3.jpg"
 model = load_model(checkpoint_filepath)
 
 
